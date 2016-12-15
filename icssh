@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+
+function usage {
+  echo "Usage:"
+  echo "   icssh [options...] <comma separated ip list>"
+  echo "Options:"
+  echo "  -u --user        User, default ec2-user"
+  echo "  -s --safe        Default off, enabling safe will prevent connecting to unknown hosts"
+  echo "  -i --identity    SSH key file"
+  exit 1
+}
+
+IDENTITY=""
+USER="ec2-user"
+CHECKS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+
+while [[ $# -gt 1 ]]
+do
+key="$1"
+
+case $key in
+    -u|--user)
+    USER="$2"
+    shift
+    ;;
+    -s|--safe)
+    CHECKS=""
+    ;;
+    -i|--identity)
+    IDENTITY="-i $2"
+    shift
+    ;;
+    *)
+      # unknown option
+    ;;
+esac
+
+shift
+done
+
+IPs=$1
+
+# if there are no IPs supplied in the command line arg
+# read from stdin
+if [[ -z "${IPs// }" ]]; then
+  echo "Reading from stdin"
+  while read line
+  do
+    IPs="${line} ${IPs}"
+  done < "${1:-/dev/stdin}"
+else
+  IPs=$(sed 's|,| |g' <<< $IPs)
+fi
+
+# convert to format ready for iTerm
+BOXES=""
+for IP in $IPs
+do
+  BOXES="${BOXES}\"${IP}\" "
+done
+
+BOXES=$(sed 's| |,|g' <<< $BOXES)
+BOXES="{${BOXES}}"
+
+CMD="
+set sshkey to \"${IDENTITY}\"
+set user to \"${USER}\"
+set checks to \"${CHECKS}\"
+tell application \"iTerm\"
+  set newWindow to (create window with default profile)
+
+  repeat with box in ${BOXES}
+      tell newWindow
+          tell current session
+            set newSession to (split horizontally with default profile command \"ssh \" & checks & \" \" & sshkey & \" \" & user & \"@\" & box)
+          end tell
+      end tell
+  end repeat
+
+  tell newWindow
+    tell first tab
+      tell first session to close
+    end tell
+  end tell
+
+  tell application \"System Events\"
+      keystroke \"i\" using {command down, shift down}
+  end tell
+end tell
+"
+
+osascript -e "${CMD}"
