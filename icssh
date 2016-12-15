@@ -4,39 +4,47 @@ function usage {
   echo "Usage:"
   echo "   icssh [options...] <comma separated ip list>"
   echo "Options:"
+  echo "  -h --help        Show this usage information"
   echo "  -u --user        User, default ec2-user"
   echo "  -s --safe        Default off, enabling safe will prevent connecting to unknown hosts"
   echo "  -i --identity    SSH key file"
   exit 1
 }
 
+HELP=""
 IDENTITY=""
 USER="ec2-user"
 CHECKS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 
-while [[ $# -gt 1 ]]
+while [[ $# -gt 0 ]]
 do
-key="$1"
+  key="$1"
 
-case $key in
-    -u|--user)
-    USER="$2"
-    shift
-    ;;
-    -s|--safe)
-    CHECKS=""
-    ;;
-    -i|--identity)
-    IDENTITY="-i $2"
-    shift
-    ;;
-    *)
-      # unknown option
-    ;;
-esac
-
-shift
+  case $key in
+      -u|--user)
+      USER="$2"
+      shift
+      ;;
+      -s|--safe)
+      CHECKS=""
+      ;;
+      -i|--identity)
+      IDENTITY="-i $2"
+      shift
+      ;;
+      -h|--help|-?)
+      HELP="on"
+      ;;
+      *)
+        # unknown option
+      ;;
+  esac
+  shift
 done
+
+if [[ ${HELP} = "on" ]]; then
+  usage
+fi
 
 IPs=$1
 
