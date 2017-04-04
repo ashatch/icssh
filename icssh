@@ -67,7 +67,7 @@ do
   BOXES="${BOXES}\"${IP}\" "
 done
 
-BOXES=$(sed 's| |,|g' <<< $BOXES)
+BOXES=$(echo $BOXES | sed 's| |,|g')
 BOXES="{${BOXES}}"
 
 CMD="
