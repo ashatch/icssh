@@ -67,6 +67,9 @@ do
   BOXES="${BOXES}\"${IP}\" "
 done
 
+// Trim trailing whitespace
+BOXES="$(echo -e "${BOXES}" | sed -e 's/[[:space:]]*$//')"
+
 BOXES=$(echo $BOXES | sed 's| |,|g')
 BOXES="{${BOXES}}"
 
